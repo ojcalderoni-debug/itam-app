@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id            String   @id @default(uuid())
+  serial_number String   @unique
+  model         String
+  type          String   // e.g., "Laptop", "Desktop", "Tablet"
+  cpu           String?
+  ram           String?
+  os            String?
+  pcName        String?
+  userName      String?
+  ipAddress     String?
+  officeVersion String?
+  owner         String?
+  status        String   @default("Active") // "Active", "In Repair", "Decommissioned"
+  
+  maintenance_logs MaintenanceLog[]
+  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  @@map("assets")
+}
+
+model MaintenanceLog {
+  id              String   @id @default(uuid())
+  asset_id        String
+  asset           Asset    @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+  date            DateTime @default(now())
+  issue_type      String   // e.g., "Hardware", "Software", "Upgrade"
+  solution_detail String?
+  technician_id   String?  // References a user ID from Supabase Auth
+  
+  created_at      DateTime @default(now())
+  
+  @@map("maintenance_logs")
+}
