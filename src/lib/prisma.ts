@@ -1,20 +1,16 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { Pool } from 'pg'
 
 const prismaClientSingleton = () => {
     const connectionString = process.env.DATABASE_URL
 
     if (connectionString) {
-        const pool = new Pool({ 
-            connectionString,
-            ssl: connectionString.includes('supabase.com') ? { rejectUnauthorized: false } : false
-        })
-        const adapter = new PrismaPg(pool)
-        return new PrismaClient({ adapter })
+        // Direct connection is more stable on Vercel
+        return new PrismaClient({
+            datasourceUrl: connectionString
+        } as any)
     }
 
-    // Fallback if DATABASE_URL is missing (helpful during build-time static discovery)
+    // Fallback for build-time
     return new PrismaClient()
 }
 

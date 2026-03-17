@@ -35,6 +35,9 @@ export default async function DashboardPage() {
     let error: string | null = null
 
     try {
+        if (!process.env.DATABASE_URL) {
+            throw new Error('La variable DATABASE_URL no está definida en el entorno de JS.')
+        }
         const [statsData, assetsData] = await Promise.all([getStats(), getAssets()])
         stats = statsData
         assets = assetsData
