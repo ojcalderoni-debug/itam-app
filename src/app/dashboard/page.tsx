@@ -35,25 +35,24 @@ export default async function DashboardPage() {
     let error: string | null = null
 
     try {
-        if (!process.env.DATABASE_URL) {
-            throw new Error('La variable DATABASE_URL no está definida en el entorno de JS.')
-        }
         const [statsData, assetsData] = await Promise.all([getStats(), getAssets()])
         stats = statsData
         assets = assetsData
     } catch (e: any) {
         console.error('Database connection error:', e)
-        error = e.message || 'No se pudo conectar a la base de datos'
+        error = 'No se pudo conectar a la base de datos de activos.'
     }
 
     if (error) {
         return (
             <div className="p-8">
-                <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-xl">
-                    <h2 className="text-red-600 font-bold text-xl mb-2">Error de Conexión</h2>
-                    <p className="text-red-500">La aplicación no pudo conectarse a la base de datos en Supabase.</p>
-                    <p className="text-xs mt-4 text-red-400 font-mono">Detalle: {error}</p>
-                    <p className="text-sm mt-4 text-muted-foreground">Por favor, verifica que las variables de entorno estén configuradas en Vercel.</p>
+                <div className="bg-destructive/10 border border-destructive/20 p-6 rounded-xl text-center">
+                    <Monitor className="w-12 h-12 text-destructive mx-auto mb-4" />
+                    <h2 className="text-destructive font-bold text-xl mb-2">Error de Conexión</h2>
+                    <p className="text-muted-foreground">{error}</p>
+                    <Button variant="outline" className="mt-6" asChild>
+                        <Link href="/dashboard">Reintentar</Link>
+                    </Button>
                 </div>
             </div>
         )
