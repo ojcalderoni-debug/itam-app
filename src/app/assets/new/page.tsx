@@ -12,14 +12,7 @@ import { FileUp, Loader2 } from 'lucide-react'
 const ASSET_TYPES = ['Laptop', 'Desktop', 'Tablet', 'Server', 'Printer', 'Other']
 const STATUS_OPTIONS = ['Active', 'In Repair', 'Decommissioned']
 
-// Import pdf.js for client-side extraction
-import * as pdfjs from 'pdfjs-dist'
-
-// Set worker for browser environment
-// Note: In Next.js with Turbopack, we usually point to the public static worker or use a dynamic import.
-// For simplicity in this environment, we'll use the CDN or-hosted version of the worker if possible, 
-// but since we have it in node_modules, we'll try to let pdf.js handle it or use a fallback.
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`
+// removed top-level pdfjs-dist import to avoid DOMMatrix error during SSR
 
 function parseBelarcText(text: string) {
     const extracted: Record<string, string> = {}
@@ -59,12 +52,11 @@ function parseBelarcText(text: string) {
     }
 
     // User Name
+    // User Name
     const userMatches = [
-        /Inicio de sesión de Windows:\s*(.*?)(?:\n|$)/i,
-        /Logon Server\s*:?\s*(.*?)(?:\n|$)/i,
-        /Current User\s*:?\s*(.*?)(?:\n|$)/i,
-        /Usuario\s*:?\s*(.*?)(?:\n|$)/i,
-        /Logon\s*:?\s*(.*?)(?:\n|$)/i
+        /(?:Inicio de sesión de Windows|Windows Logon|Current User)\s*[:]?\s*((?:(?!(?:Unidad organizativa|Organizational Unit|Local Computer Name|Logon Server|Dominio|Domain|Roles|Derechos|Perfil|Profile|Active Directory|Sufijo DNS|DNS Suffix)).)+?)(?=\s+(?:Unidad organizativa|Organizational Unit|Local Computer Name|Logon Server|Dominio|Domain|Roles|Derechos|Perfil|Profile|Active Directory|Sufijo DNS|DNS Suffix)|$)/i,
+        /Logon Server\s*:?\s*([^\n]+?)(?=\s+(?:Unidad|Current|Domain|Dominio|Roles)|$)/i,
+        /(?:Usuario|Logon|Usuario de red)\s*[:]?\s*((?:(?!(?:Unidad|Dominio|Servidor|IP|Dirección|Rol|Módulo|Logon Server)).){1,80})/i
     ]
     for (const re of userMatches) {
         const match = cleanText.match(re)
@@ -94,27 +86,25 @@ function parseBelarcText(text: string) {
 
     // Model
     const modelMatches = [
-        /System Model\s*\n(.*?)(?:\n|$)/i,
-        /System Model:\s*(.*?)(?:\n|$)/i,
-        /Placa base:\s*(.*?)(?:\n|$)/i,
-        /Main Circuit Board\s*\n.*?\nBoard:\s*(.*?)(?:\n|$)/i,
-        /Board:\s*(.*?)(?:\n|$)/i
+        /(?:System Model|Modelo de sistema|Modelo del sistema)\s*[:]?\s*(.+?)(?=\s+(?:System Serial Number|Número de serie|Enclosure|Chasis|Motherboard|Placa|Processor|Procesador|Asset Tag|Etiqueta|Memoria|RAM|$))/i,
+        /(?:System Model|Modelo de sistema|Modelo del sistema)\s*[:]?\s*([^]{2,60})/i
     ]
     for (const re of modelMatches) {
         const match = cleanText.match(re)
-        const val = match?.[1] || match?.[0]
-        if (val) {
-            extracted.model = val.trim().substring(0, 100)
+        const val = match?.[1]
+        if (val && val.length > 2) {
+            extracted.model = val.replace(/System Model|Modelo de sistema|Modelo del sistema/ig, '').trim().substring(0, 100)
             break
         }
     }
 
+    // ... (Serial Number and CPU parsing skipped for brevity, just updating the relevant block) ...
     // Serial
     const serialMatches = [
-        /System Serial Number:\s*([A-Z0-9\-]+)/i,
-        /Serial Number:\s*([A-Z0-9\-]+)/i,
-        /Board Serial Number:\s*([A-Z0-9\-]+)/i,
-        /S\/N:\s*([A-Z0-9\-]+)/i
+        /(?:System Serial Number|Número de serie del sistema|Número de serie)\s*[:]?\s*([A-Za-z0-9\-_]+)/i,
+        /Serial Number\s*[:]?\s*([A-Za-z0-9\-_]+)/i,
+        /Board Serial Number\s*[:]?\s*([A-Za-z0-9\-_]+)/i,
+        /S\/N\s*[:]?\s*([A-Za-z0-9\-_]+)/i
     ]
     for (const re of serialMatches) {
         const match = cleanText.match(re)
@@ -126,42 +116,38 @@ function parseBelarcText(text: string) {
 
     // CPU
     const cpuMatches = [
-        /(\d+[\d.,]*\s*(?:gigahertz|megahertz|GHz|MHz)\s+.*)/i,
-        /Processor[s]?\s*\n(.*?)(?:\n|$)/i,
-        /Intel\s+Core\s+.*?(?:\n|$)/i,
-        /AMD\s+Ryzen\s+.*?(?:\n|$)/i
+        /(?:Processor[s]?|Procesador)\s*[:]?\s*(.+?)(?=\s+(?:Main Circuit Board|Placa base|Memory|Memoria|Drives|Unidades de|Printers|Impresoras|System Model|Modelo|Local Drive|$))/i,
+        /(\d+[\d.,]*\s*(?:gigahertz|megahertz|GHz|MHz)\s+(?:Intel|AMD|Arm).*?)(?=\s+(?:Main|Placa|Memory|Memoria|Drive|Unidad|System|Modelo|$))/i,
+        /(Intel\s+Core\s+[^\s]+)/i,
+        /(AMD\s+Ryzen\s+[^\s]+)/i
     ]
     for (const re of cpuMatches) {
         const match = cleanText.match(re)
         const val = match?.[1] || match?.[0]
         if (val) {
-            extracted.cpu = val.trim().substring(0, 150)
+            extracted.cpu = val.replace(/Processor[s]?|Procesador/ig, '').trim().substring(0, 100)
             break
         }
     }
 
     // RAM
     const ramMatches = [
-        // Match specific Physical Memory patterns first
-        /(\d+[\d.,]*\s*(?:GB|MB|Gigabytes|Megabytes)\s*(?:Installed\s+Memory|Physical\s+Memory|Memoria\s+física|Memoria\s+instalada))/i,
+        /(?:Memory Modules|Módulos de memoria)\s*.*?(\d+[\d.,]*\s*(?:GB|MB|Gigabytes|Megabytes))/i,
+        /(\d+[\d.,]*\s*(?:GB|MB|Gigabytes|Megabytes)\s*(?:Installed\s+Memory|Physical\s+Memory|Memoria\s+física|Usable\s+Installed\s+Memory|Memoria\s+instalada))/i,
         /Physical Memory\s*[:\s]+(\d+[\d.,]*\s*(?:GB|MB|Gigabytes|Megabytes))/i,
-        /Memoria\s+física\s*[:\s]+(\d+[\d.,]*\s*(?:GB|MB|Gigabytes|Megabytes))/i,
-        // Fallback with context
-        /(\d+[\d.,]*\s*(?:GB|MB)\s*(?:RAM|Physical|Memory|Installed|Memoria|Usable))/i
+        /Memoria\s+física\s*[:\s]+(\d+[\d.,]*\s*(?:GB|MB|Gigabytes|Megabytes))/i
     ]
     for (const re of ramMatches) {
         const match = cleanText.match(re)
         const val = match?.[1] || match?.[0]
         if (val) {
-            // Negative check to avoid hard drives
             const lowerVal = val.toLowerCase()
-            const lowerContext = cleanText.substring(Math.max(0, (match.index || 0) - 50), (match.index || 0) + 100).toLowerCase()
-
-            if (lowerContext.includes('drive') || lowerContext.includes('disk') || lowerContext.includes('disco') || lowerContext.includes('almacenamiento')) {
+            if (val.toLowerCase().includes('drive') || val.toLowerCase().includes('disk') || val.toLowerCase().includes('disco')) {
                 continue
             }
-
-            extracted.ram = val.trim().substring(0, 100)
+            // Clean up if the match captured the prefix
+            let cleanRam = val.replace(/Memory Modules\s*/i, '').replace(/Módulos de memoria\s*/i, '').trim()
+            extracted.ram = cleanRam.substring(0, 100)
             break
         }
     }
@@ -177,6 +163,36 @@ function parseBelarcText(text: string) {
         if (match?.[0]) {
             extracted.officeVersion = match[0].trim().substring(0, 255)
             break
+        }
+    }
+
+    // Windows License
+    const winLicenseMatches = [
+        /Microsoft - Windows\s+1[01]\s+(?:Professional|Pro)\s*(?:\(x64\))?.*?(?:Key:\s*([A-Z0-9\-]+))/i,
+        /Microsoft - Windows.*?(?:Key:\s*([A-Z0-9\-]+))/i
+    ]
+
+    // Look for Windows License string in general if Key is not found
+    const winLicenseStringMatches = [
+        /Microsoft - Windows\s+1[01]\s+(?:Professional|Pro)\s*(?:\(x64\))?.*/i
+    ]
+
+    for (const re of winLicenseMatches) {
+        const match = cleanText.match(re)
+        if (match?.[1]) { // If we got a direct key match
+            extracted.windowsLicense = `Key: ${match[1].trim()}`
+            break
+        }
+    }
+
+    if (!extracted.windowsLicense) {
+        for (const re of winLicenseStringMatches) {
+            const match = cleanText.match(re)
+            if (match?.[0]) {
+                // Just grab the whole string, up to 255 chars
+                extracted.windowsLicense = match[0].trim().substring(0, 255)
+                break
+            }
         }
     }
 
@@ -199,18 +215,22 @@ export default function NewAssetPage() {
         userName: '',
         ipAddress: '',
         officeVersion: '',
+        windowsLicense: '',
     })
 
-    const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
+    const [isDragging, setIsDragging] = useState(false)
+
+    const processPdfFile = async (file: File) => {
         setPdfParsing(true)
         console.log('--- Inicio de Extracción de PDF (Navegador) ---')
         try {
             const arrayBuffer = await file.arrayBuffer()
             console.log('Tamaño del archivo:', file.size, 'ArrayBuffer bytes:', arrayBuffer.byteLength)
 
-            // Sincronizar versión del worker con la API (5.4.624)
+            // Import pdfjs-dist dynamically so DOMMatrix is evaluated only in the browser
+            const pdfjs = await import('pdfjs-dist')
+            
+            // Sincronizar versión del worker con la API
             pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
             const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
@@ -259,6 +279,37 @@ export default function NewAssetPage() {
         setPdfParsing(false)
     }
 
+    const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) await processPdfFile(file)
+    }
+
+    const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+        const file = e.dataTransfer.files?.[0]
+        if (file) {
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                await processPdfFile(file)
+            } else {
+                toast.error('Por favor sube un archivo PDF de Belarc.')
+            }
+        }
+    }
+
+    const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(true)
+    }
+
+    const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+    }
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setPending(true)
@@ -288,7 +339,14 @@ export default function NewAssetPage() {
                     <CardDescription>Sube el reporte PDF de Belarc y los campos se completarán automáticamente</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <label className="flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-primary/50 transition-colors">
+                    <label 
+                        className={`flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+                            isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                        }`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                    >
                         {pdfParsing ? (
                             <><Loader2 className="w-8 h-8 text-primary animate-spin" /><p className="text-sm text-muted-foreground">Procesando PDF...</p></>
                         ) : (
@@ -381,6 +439,11 @@ export default function NewAssetPage() {
                             <Label htmlFor="officeVersion">Versión de Office / Licencia</Label>
                             <Input id="officeVersion" name="officeVersion" value={formData.officeVersion}
                                 onChange={e => setFormData(p => ({ ...p, officeVersion: e.target.value }))} placeholder="Microsoft Office 2021..." />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="windowsLicense">Licencia Windows</Label>
+                            <Input id="windowsLicense" name="windowsLicense" value={formData.windowsLicense}
+                                onChange={e => setFormData(p => ({ ...p, windowsLicense: e.target.value }))} placeholder="Key: XXXX-XXXX..." />
                         </div>
                         <div className="flex gap-3 pt-2">
                             <Button type="submit" disabled={pending} className="flex-1">

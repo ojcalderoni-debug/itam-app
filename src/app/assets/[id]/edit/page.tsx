@@ -32,6 +32,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         userName: '',
         ipAddress: '',
         officeVersion: '',
+        windowsLicense: '',
     })
 
     useEffect(() => {
@@ -53,6 +54,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
                     userName: data.userName || '',
                     ipAddress: data.ipAddress || '',
                     officeVersion: data.officeVersion || '',
+                    windowsLicense: data.windowsLicense || '',
                 })
             } catch (err) {
                 toast.error('Error al cargar los datos del activo')
@@ -86,9 +88,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
     return (
         <div className="p-8 max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href={`/assets/${id}`}>
-                    <Button variant="ghost" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
-                </Link>
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href={`/assets/${id}`}><ArrowLeft className="w-4 h-4" /></Link>
+                </Button>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Editar Activo</h1>
                     <p className="text-muted-foreground mt-1">Modifica la información del equipo</p>
@@ -173,9 +175,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="officeVersion">Versión de Office / Licencia</Label>
-                            <Input id="officeVersion" name="officeVersion" value={formData.officeVersion}
-                                onChange={e => setFormData(p => ({ ...p, officeVersion: e.target.value }))} />
+                            <Label htmlFor="windowsLicense">Licencia Windows</Label>
+                            <Input id="windowsLicense" name="windowsLicense" value={formData.windowsLicense}
+                                onChange={e => setFormData(p => ({ ...p, windowsLicense: e.target.value }))} placeholder="Key: XXXX-XXXX..." />
                         </div>
                         <div className="flex gap-3 pt-2">
                             <Button type="submit" disabled={pending} className="flex-1 gap-2">

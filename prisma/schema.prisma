@@ -19,6 +19,7 @@ model Asset {
   userName      String?
   ipAddress     String?
   officeVersion String?
+  windowsLicense String?
   owner         String?
   status        String   @default("Active") // "Active", "In Repair", "Decommissioned"
   

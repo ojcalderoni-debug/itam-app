@@ -13,7 +13,12 @@ export async function GET(
         if (!asset) {
             return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
         }
-        return NextResponse.json(asset)
+
+        // Fetch windowsLicense directly to bypass Prisma client limitations
+        const rawData = await prisma.$queryRaw`SELECT "windowsLicense" FROM assets WHERE id = ${id}`
+        const windowsLicense = Array.isArray(rawData) && rawData.length > 0 ? (rawData[0] as any).windowsLicense : null
+
+        return NextResponse.json({ ...asset, windowsLicense })
     } catch (error) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
     }

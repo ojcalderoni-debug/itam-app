@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { PlusCircle, Upload, Search, Cpu, HardDrive, Monitor } from 'lucide-react'
+import { PlusCircle, Upload, Search, Cpu, HardDrive, Monitor, Download } from 'lucide-react'
 
 async function getStats() {
     const [total, active, inRepair, decommissioned] = await Promise.all([
@@ -41,16 +41,21 @@ export default async function DashboardPage() {
                     <p className="text-muted-foreground mt-1">Inventario de activos de tecnología</p>
                 </div>
                 <div className="flex gap-3">
-                    <Link href="/import">
-                        <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2" asChild>
+                        <a href="/api/export-csv" download="inventario_activos.csv">
+                            <Download className="w-4 h-4" /> Exportar CSV
+                        </a>
+                    </Button>
+                    <Button variant="outline" className="gap-2" asChild>
+                        <Link href="/import">
                             <Upload className="w-4 h-4" /> Importar
-                        </Button>
-                    </Link>
-                    <Link href="/assets/new">
-                        <Button className="gap-2">
+                        </Link>
+                    </Button>
+                    <Button className="gap-2" asChild>
+                        <Link href="/assets/new">
                             <PlusCircle className="w-4 h-4" /> Nuevo Activo
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
@@ -88,8 +93,8 @@ export default async function DashboardPage() {
                             <p className="text-muted-foreground font-medium">No hay activos registrados</p>
                             <p className="text-muted-foreground text-sm mt-1">Comienza agregando un nuevo activo o importando desde un archivo</p>
                             <div className="flex gap-3 justify-center mt-6">
-                                <Link href="/import"><Button variant="outline" size="sm" className="gap-2"><Upload className="w-4 h-4" />Importar</Button></Link>
-                                <Link href="/assets/new"><Button size="sm" className="gap-2"><PlusCircle className="w-4 h-4" />Nuevo Activo</Button></Link>
+                                <Button variant="outline" size="sm" className="gap-2" asChild><Link href="/import"><Upload className="w-4 h-4" />Importar</Link></Button>
+                                <Button size="sm" className="gap-2" asChild><Link href="/assets/new"><PlusCircle className="w-4 h-4" />Nuevo Activo</Link></Button>
                             </div>
                         </div>
                     ) : (
@@ -121,9 +126,9 @@ export default async function DashboardPage() {
                                             </span>
                                         </td>
                                         <td className="px-5 py-3">
-                                            <Link href={`/assets/${asset.id}`}>
-                                                <Button variant="ghost" size="sm">Ver</Button>
-                                            </Link>
+                                            <Button variant="ghost" size="sm" asChild>
+                                                <Link href={`/assets/${asset.id}`}>Ver</Link>
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}

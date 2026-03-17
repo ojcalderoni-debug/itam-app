@@ -11,6 +11,7 @@ export const AssetSchema = z.object({
     userName: z.string().optional(),
     ipAddress: z.string().optional(),
     officeVersion: z.string().optional(),
+    windowsLicense: z.string().optional(),
     owner: z.string().optional(),
     status: z.enum(['Active', 'In Repair', 'Decommissioned']).default('Active'),
 })
@@ -30,10 +31,11 @@ export const BulkImportRowSchema = z.object({
     os: z.string().optional(),
     pcName: z.string().optional(),
     userName: z.string().optional(),
-    ipAddress: z.string().optional(),
-    officeVersion: z.string().optional(),
-    owner: z.string().optional(),
-    status: z.string().optional(),
+    ipAddress: z.string().optional().nullable(),
+    officeVersion: z.string().optional().nullable(),
+    windowsLicense: z.string().optional().nullable(),
+    owner: z.string().optional().nullable(),
+    status: z.string().optional().nullable(),
 })
 
 export type AssetFormData = z.infer<typeof AssetSchema>

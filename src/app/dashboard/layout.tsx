@@ -30,24 +30,24 @@ async function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-1">
-                <Link href="/dashboard">
-                    <Button variant="ghost" className="w-full justify-start gap-3">
+                <Button variant="ghost" className="w-full justify-start gap-3" asChild>
+                    <Link href="/dashboard">
                         <LayoutDashboard className="w-4 h-4" />
                         Dashboard
-                    </Button>
-                </Link>
-                <Link href="/assets/new">
-                    <Button variant="ghost" className="w-full justify-start gap-3">
+                    </Link>
+                </Button>
+                <Button variant="ghost" className="w-full justify-start gap-3" asChild>
+                    <Link href="/assets/new">
                         <PlusCircle className="w-4 h-4" />
                         Nuevo Activo
-                    </Button>
-                </Link>
-                <Link href="/import">
-                    <Button variant="ghost" className="w-full justify-start gap-3">
+                    </Link>
+                </Button>
+                <Button variant="ghost" className="w-full justify-start gap-3" asChild>
+                    <Link href="/import">
                         <Upload className="w-4 h-4" />
                         Carga Masiva
-                    </Button>
-                </Link>
+                    </Link>
+                </Button>
             </nav>
 
             {/* User info */}

@@ -17,6 +17,7 @@ export async function createAsset(formData: FormData) {
         userName: formData.get('userName') as string || undefined,
         ipAddress: formData.get('ipAddress') as string || undefined,
         officeVersion: formData.get('officeVersion') as string || undefined,
+        windowsLicense: formData.get('windowsLicense') as string || undefined,
         owner: formData.get('owner') as string || undefined,
         status: (formData.get('status') as string) || 'Active',
     }
@@ -26,10 +27,17 @@ export async function createAsset(formData: FormData) {
         return { error: parsed.error.issues[0].message }
     }
 
+    const { windowsLicense, ...prismaData } = parsed.data
+
     let assetId: string | null = null
     try {
-        const asset = await prisma.asset.create({ data: parsed.data })
+        const asset = await prisma.asset.create({ data: prismaData as any })
         assetId = asset.id
+
+        if (windowsLicense !== undefined) {
+            await prisma.$executeRaw`UPDATE assets SET "windowsLicense" = ${windowsLicense} WHERE id = ${assetId}`
+        }
+
         revalidatePath('/dashboard')
     } catch (e: unknown) {
         console.error('Error in createAsset:', e)
@@ -56,6 +64,7 @@ export async function updateAsset(id: string, formData: FormData) {
         userName: formData.get('userName') as string || undefined,
         ipAddress: formData.get('ipAddress') as string || undefined,
         officeVersion: formData.get('officeVersion') as string || undefined,
+        windowsLicense: formData.get('windowsLicense') as string || undefined,
         owner: formData.get('owner') as string || undefined,
         status: (formData.get('status') as string) || 'Active',
     }
@@ -65,11 +74,18 @@ export async function updateAsset(id: string, formData: FormData) {
         return { error: parsed.error.issues[0].message }
     }
 
+    const { windowsLicense, ...prismaData } = parsed.data
+
     try {
         await prisma.asset.update({
             where: { id },
-            data: parsed.data
+            data: prismaData as any
         })
+
+        if (windowsLicense !== undefined) {
+            await prisma.$executeRaw`UPDATE assets SET "windowsLicense" = ${windowsLicense} WHERE id = ${id}`
+        }
+
         revalidatePath(`/assets/${id}`)
         revalidatePath('/dashboard')
     } catch (e: unknown) {

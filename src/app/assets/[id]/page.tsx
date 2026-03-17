@@ -34,15 +34,19 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
 
     if (!asset) notFound()
 
+    // Fetch windowsLicense directly to bypass Prisma client limitations
+    const rawData = await prisma.$queryRaw`SELECT "windowsLicense" FROM assets WHERE id = ${id}`
+    const windowsLicense = Array.isArray(rawData) && rawData.length > 0 ? (rawData[0] as any).windowsLicense : null
+
     const addLog = addMaintenanceLog.bind(null)
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Link href="/dashboard">
-                    <Button variant="ghost" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
-                </Link>
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/dashboard"><ArrowLeft className="w-4 h-4" /></Link>
+                </Button>
                 <div className="flex-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold">{asset.model}</h1>
@@ -53,12 +57,12 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
                     <p className="text-muted-foreground font-mono text-sm mt-1">{asset.serial_number}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link href={`/assets/${asset.id}/edit`}>
-                        <Button variant="outline" size="sm" className="gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" asChild>
+                        <Link href={`/assets/${asset.id}/edit`}>
                             <Pencil className="w-4 h-4" />
                             Editar
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                     <DeleteAssetButton id={asset.id} />
                 </div>
             </div>
@@ -73,6 +77,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
                             { icon: Cpu, label: 'CPU', value: asset.cpu },
                             { icon: HardDrive, label: 'RAM', value: asset.ram },
                             { icon: Monitor, label: 'Sistema Operativo', value: asset.os },
+                            { icon: Monitor, label: 'Licencia Windows', value: windowsLicense },
                             { icon: User, label: 'Usuario Asignado', value: asset.owner },
                         ].map(({ icon: Icon, label, value }) => (
                             <div key={label} className="flex items-start gap-3">
@@ -145,7 +150,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
                                             <p className="text-sm">{log.solution_detail || 'Sin descripción'}</p>
                                             <DeleteLogButton id={log.id} assetId={asset.id} />
                                         </div>
-                                        <p className="text-xs text-muted-foreground mt-1">
+                                        <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
                                             {new Date(log.date).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                     </div>
