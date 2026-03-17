@@ -3,13 +3,16 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
 const prismaClientSingleton = () => {
-    // Ensure env is loaded
-    if (!process.env.DATABASE_URL) {
-        require('dotenv').config({ path: '.env.local' })
+    const connectionString = process.env.DATABASE_URL
+
+    if (!connectionString) {
+        throw new Error('DATABASE_URL is not defined in environment variables')
     }
 
-    const connectionString = process.env.DATABASE_URL
-    const pool = new Pool({ connectionString })
+    const pool = new Pool({ 
+        connectionString,
+        ssl: connectionString.includes('supabase.com') ? { rejectUnauthorized: false } : false
+    })
     const adapter = new PrismaPg(pool)
 
     return new PrismaClient({ adapter })
