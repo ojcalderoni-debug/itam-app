@@ -30,7 +30,31 @@ const statusColors: Record<string, string> = {
 }
 
 export default async function DashboardPage() {
-    const [stats, assets] = await Promise.all([getStats(), getAssets()])
+    let stats = { total: 0, active: 0, inRepair: 0, decommissioned: 0 }
+    let assets: any[] = []
+    let error: string | null = null
+
+    try {
+        const [statsData, assetsData] = await Promise.all([getStats(), getAssets()])
+        stats = statsData
+        assets = assetsData
+    } catch (e: any) {
+        console.error('Database connection error:', e)
+        error = e.message || 'No se pudo conectar a la base de datos'
+    }
+
+    if (error) {
+        return (
+            <div className="p-8">
+                <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-xl">
+                    <h2 className="text-red-600 font-bold text-xl mb-2">Error de Conexión</h2>
+                    <p className="text-red-500">La aplicación no pudo conectarse a la base de datos en Supabase.</p>
+                    <p className="text-xs mt-4 text-red-400 font-mono">Detalle: {error}</p>
+                    <p className="text-sm mt-4 text-muted-foreground">Por favor, verifica que las variables de entorno estén configuradas en Vercel.</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="p-8 space-y-8">
