@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import prisma from '@/lib/prisma'
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
