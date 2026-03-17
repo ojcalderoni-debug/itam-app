@@ -5,17 +5,17 @@ import { Pool } from 'pg'
 const prismaClientSingleton = () => {
     const connectionString = process.env.DATABASE_URL
 
-    if (!connectionString) {
-        throw new Error('DATABASE_URL is not defined in environment variables')
+    if (connectionString) {
+        const pool = new Pool({ 
+            connectionString,
+            ssl: connectionString.includes('supabase.com') ? { rejectUnauthorized: false } : false
+        })
+        const adapter = new PrismaPg(pool)
+        return new PrismaClient({ adapter })
     }
 
-    const pool = new Pool({ 
-        connectionString,
-        ssl: connectionString.includes('supabase.com') ? { rejectUnauthorized: false } : false
-    })
-    const adapter = new PrismaPg(pool)
-
-    return new PrismaClient({ adapter })
+    // Fallback if DATABASE_URL is missing (helpful during build-time static discovery)
+    return new PrismaClient()
 }
 
 declare const globalThis: {
