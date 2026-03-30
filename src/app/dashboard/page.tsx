@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PlusCircle, Upload, Search, Cpu, HardDrive, Monitor, Download } from 'lucide-react'
+import { FormattedDate } from '@/components/FormattedDate'
 
 async function getStats() {
     const [total, active, inRepair, decommissioned] = await Promise.all([
@@ -134,6 +135,7 @@ export default async function DashboardPage() {
                                     <th className="text-left px-5 py-3 font-medium text-muted-foreground">RAM</th>
                                     <th className="text-left px-5 py-3 font-medium text-muted-foreground">Usuario</th>
                                     <th className="text-left px-5 py-3 font-medium text-muted-foreground">Estado</th>
+                                    <th className="text-left px-5 py-3 font-medium text-muted-foreground">Fecha</th>
                                     <th className="text-left px-5 py-3 font-medium text-muted-foreground">Acciones</th>
                                 </tr>
                             </thead>
@@ -150,6 +152,9 @@ export default async function DashboardPage() {
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[asset.status] || ''}`}>
                                                 {asset.status}
                                             </span>
+                                        </td>
+                                        <td className="px-5 py-3 text-muted-foreground text-xs whitespace-nowrap">
+                                            <FormattedDate date={asset.created_at} />
                                         </td>
                                         <td className="px-5 py-3">
                                             <Button variant="ghost" size="sm" asChild>

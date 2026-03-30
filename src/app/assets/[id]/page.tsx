@@ -10,6 +10,7 @@ import { addMaintenanceLog } from '@/app/actions'
 import { DeleteAssetButton } from '@/components/DeleteAssetButton'
 import { DeleteLogButton } from '@/components/DeleteLogButton'
 import { ArrowLeft, Cpu, HardDrive, Monitor, User, Wrench, Clock, Pencil } from 'lucide-react'
+import { FormattedDate } from '@/components/FormattedDate'
 
 const statusColors: Record<string, string> = {
     'Active': 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
@@ -150,8 +151,8 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
                                             <p className="text-sm">{log.solution_detail || 'Sin descripción'}</p>
                                             <DeleteLogButton id={log.id} assetId={asset.id} />
                                         </div>
-                                        <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
-                                            {new Date(log.date).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            <FormattedDate date={log.date} />
                                         </p>
                                     </div>
                                 </div>
