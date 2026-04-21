@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Search, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,14 @@ const statusColors: Record<string, string> = {
     'Decommissioned': 'bg-red-500/15 text-red-600 dark:text-red-400',
 }
 
+const typeColors: Record<string, string> = {
+    'Laptop': 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+    'Desktop': 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+    'Printer': 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
+    'Tablet': 'bg-pink-500/15 text-pink-600 dark:text-pink-400',
+    'Other': 'bg-gray-500/15 text-gray-600 dark:text-gray-400',
+}
+
 interface AssetListProps {
     initialAssets: any[]
 }
@@ -19,6 +27,13 @@ interface AssetListProps {
 export function AssetList({ initialAssets }: AssetListProps) {
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('All')
+    const [typeFilter, setTypeFilter] = useState('All')
+
+    // Extract unique types dynamically from the data
+    const uniqueTypes = useMemo(() => {
+        const types = new Set(initialAssets.map(asset => asset.type).filter(Boolean))
+        return Array.from(types).sort()
+    }, [initialAssets])
 
     const filteredAssets = initialAssets.filter(asset => {
         const matchesSearch = 
@@ -29,8 +44,9 @@ export function AssetList({ initialAssets }: AssetListProps) {
             (asset.pcName || '').toLowerCase().includes(search.toLowerCase())
         
         const matchesStatus = statusFilter === 'All' || asset.status === statusFilter
+        const matchesType = typeFilter === 'All' || asset.type === typeFilter
 
-        return matchesSearch && matchesStatus
+        return matchesSearch && matchesStatus && matchesType
     })
 
     return (
@@ -51,6 +67,18 @@ export function AssetList({ initialAssets }: AssetListProps) {
                 </div>
                 <div className="flex items-center gap-3">
                     <select 
+                        id="type-filter"
+                        className="h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                    >
+                        <option value="All">Todos los tipos</option>
+                        {uniqueTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                        ))}
+                    </select>
+                    <select 
+                        id="status-filter"
                         className="h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
@@ -91,7 +119,11 @@ export function AssetList({ initialAssets }: AssetListProps) {
                                 <tr key={asset.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                                     <td className="px-5 py-3 font-mono text-xs">{asset.serial_number}</td>
                                     <td className="px-5 py-3 font-medium">{asset.model}</td>
-                                    <td className="px-5 py-3 text-muted-foreground">{asset.type}</td>
+                                    <td className="px-5 py-3">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeColors[asset.type] || typeColors['Other']}`}>
+                                            {asset.type}
+                                        </span>
+                                    </td>
                                     <td className="px-5 py-3 text-muted-foreground">{asset.owner || '—'}</td>
                                     <td className="px-5 py-3">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[asset.status] || ''}`}>
