@@ -1,17 +1,12 @@
 import { PrismaClient } from '@prisma/client'
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
 
 const prismaClientSingleton = () => {
     const connectionString = process.env.DATABASE_URL
-
-    if (connectionString) {
-        // Direct connection is more stable on Vercel
-        return new PrismaClient({
-            datasourceUrl: connectionString
-        } as any)
-    }
-
-    // Fallback for build-time
-    return new PrismaClient()
+    const pool = new Pool({ connectionString })
+    const adapter = new PrismaPg(pool)
+    return new PrismaClient({ adapter })
 }
 
 declare const globalThis: {
