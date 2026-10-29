@@ -3,8 +3,9 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, Upload, Monitor, Download, Cpu, HardDrive } from 'lucide-react'
+import { PlusCircle, Upload, Monitor, Cpu, HardDrive } from 'lucide-react'
 import { AssetList } from '@/components/AssetList'
+import { ExportModal } from '@/components/ExportModal'
 
 async function getStats() {
     const [total, active, inRepair, decommissioned] = await Promise.all([
@@ -62,11 +63,7 @@ export default async function DashboardPage() {
                     <p className="text-muted-foreground mt-1">Inventario de activos de tecnología</p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                    <Button variant="outline" className="gap-2" asChild>
-                        <a href="/api/export-csv" download="inventario_activos.csv">
-                            <Download className="w-4 h-4" /> Exportar CSV
-                        </a>
-                    </Button>
+                    <ExportModal />
                     <Button variant="outline" className="gap-2" asChild>
                         <Link href="/import">
                             <Upload className="w-4 h-4" /> Importar
