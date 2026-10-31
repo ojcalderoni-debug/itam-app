@@ -51,10 +51,10 @@ export function AssetList({ initialAssets }: AssetListProps) {
 
     return (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1">
+            <div className="p-4 sm:p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1">
                     <h2 className="font-semibold text-lg shrink-0">Inventario de Activos</h2>
-                    <div className="relative flex-1 max-w-md">
+                    <div className="relative flex-1 max-w-md w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
@@ -65,7 +65,7 @@ export function AssetList({ initialAssets }: AssetListProps) {
                         />
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <select 
                         id="type-filter"
                         className="h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"

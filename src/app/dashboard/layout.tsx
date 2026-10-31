@@ -3,20 +3,18 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Monitor, LayoutDashboard, Upload, LogOut, PlusCircle } from 'lucide-react'
+import { MobileHeader } from '@/components/MobileHeader'
 
-async function Sidebar() {
+const signOut = async () => {
+    'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.auth.signOut()
+    redirect('/login')
+}
 
-    const signOut = async () => {
-        'use server'
-        const supabase = await createClient()
-        await supabase.auth.signOut()
-        redirect('/login')
-    }
-
+function DesktopSidebar({ userEmail }: { userEmail?: string }) {
     return (
-        <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
+        <aside className="hidden md:flex w-64 min-h-screen bg-card border-r border-border flex-col shrink-0">
             {/* Logo */}
             <div className="flex items-center gap-3 p-6 border-b border-border">
                 <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground">
@@ -52,9 +50,9 @@ async function Sidebar() {
 
             {/* User info */}
             <div className="p-4 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-3 truncate">{user?.email}</p>
+                <p className="text-xs text-muted-foreground mb-3 truncate">{userEmail}</p>
                 <form action={signOut}>
-                    <Button variant="outline" size="sm" className="w-full gap-2" type="submit">
+                    <Button variant="outline" size="sm" className="w-full gap-2 text-destructive hover:text-destructive" type="submit">
                         <LogOut className="w-4 h-4" />
                         Cerrar sesión
                     </Button>
@@ -64,11 +62,15 @@ async function Sidebar() {
     )
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
     return (
-        <div className="flex min-h-screen bg-background">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
+        <div className="min-h-screen bg-background flex flex-col md:flex-row">
+            <MobileHeader userEmail={user?.email} signOutAction={signOut} />
+            <DesktopSidebar userEmail={user?.email} />
+            <main className="flex-1 w-full min-w-0 overflow-x-auto">
                 {children}
             </main>
         </div>
